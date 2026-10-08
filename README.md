@@ -84,6 +84,21 @@ Gatilho: digite **"kok"** ou **"miku"** para falar com ela.
 - Imagem personalizada: `!definirfoto` (responda a uma imagem)
 - Mais detalhes: idade, cidade, status, pet, RPG
 - Comandos de edição: `!definirbio`, `!definiridade`, `!definircidade`, `!definirstatus`, `!definirfoto`, `!removerfoto`
+- O cartão do perfil agora aparece depois de uma animação curta de carregamento
+
+### Moderação e prefixo do grupo 🛡️
+- `!antitravazap` alterna a proteção contra mensagens excessivas ou com estrutura muito complexa (ativa por padrão)
+- `!antinsfw` filtra termos e links explícitos em mensagens e legendas; não analisa imagens sem legenda
+- `!setprefixo ?` define um prefixo por grupo; `!` continua aceito como alternativa
+- `!ban @membro` remove a pessoa do grupo e exige que o bot seja administrador
+
+### Brincadeiras sociais 🩵
+- `!abraçar @membro` (também aceita `!abracar`), `!bater`, `!cafune`, `!beijar`, `!elogiar`, `!susto` e `!gay`
+- As interações enviam cartões gerados localmente; `!gay` é um medidor aleatório de meme e não representa a orientação de ninguém
+
+### Limites da visão local
+- A IA continua sem serviços externos. Não há um modelo visual instalado neste ambiente, então ela não inventa o que aparece numa imagem.
+- Ao receber uma imagem, explica essa limitação e pede uma descrição em texto.
 
 ### Música Otimizada 🎵
 - Pedidos simultâneos da mesma música compartilham uma busca e um download

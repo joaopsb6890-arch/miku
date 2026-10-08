@@ -145,30 +145,33 @@ async function iniciarBot() {
 
   sock.ev.on("messages.upsert", async (m) => {
     try {
-      const msg = m.messages[0];
-      if (!msg.message || msg.key.fromMe) return;
+      const mensagens = Array.isArray(m?.messages) ? m.messages : [];
+      if (mensagens.length === 0) return;
+
+      for (const candidata of mensagens.slice(0, 100)) {
+        const jidGrupo = candidata?.key?.remoteJid;
+        if (!jidGrupo?.endsWith("@g.us")) continue;
+        const configuracao = db.grupos[jidGrupo];
+        if (!configuracao?.autorizado || configuracao.antiTravaZap === false) continue;
+        if (analisarTravazap(candidata)) {
+          await removerMensagemProtegida(
+            sock,
+            jidGrupo,
+            candidata,
+            candidata.key?.participant,
+            "Mensagem bloqueada pelo anti-trava-zap."
+          );
+          return;
+        }
+      }
+
+      const msg = mensagens.find((item) => item?.message && !item?.key?.fromMe);
+      if (!msg?.key?.remoteJid) return;
 
       const from = msg.key.remoteJid;
       const isGroup = from.endsWith("@g.us");
       const senderJid = isGroup ? msg.key.participant : from;
       const nomeUsuario = msg.pushName || "Usuário";
-
-      if (isGroup) {
-        const grupoSeguranca = pegarGrupo(from);
-        if (grupoSeguranca.autorizado && grupoSeguranca.antiTravaZap) {
-          const risco = analisarTravazap(msg);
-          if (risco) {
-            await removerMensagemProtegida(
-              sock,
-              from,
-              msg,
-              senderJid,
-              "Mensagem bloqueada pelo anti-trava-zap."
-            );
-            return;
-          }
-        }
-      }
 
       const texto = extrairTexto(msg);
       const temImagem = detectarImagem(msg);
@@ -178,11 +181,16 @@ async function iniciarBot() {
       const textoComando = respostaBotao || texto;
 
       if (!textoComando && !temImagem) return;
+      const prefixoGrupo = isGroup ? (pegarGrupo(from).prefixo || PREFIX) : PREFIX;
+      const prefixosAceitos = [...new Set([prefixoGrupo, PREFIX])];
+      const prefixoUsado = typeof textoComando === "string"
+        ? prefixosAceitos.find((prefixo) => textoComando.startsWith(prefixo))
+        : null;
 
       if (db.usuarios[senderJid]?.banido) return;
 
       if (db.manutencao?.ativa && !ehDono(senderJid, NUMEROS_DONO)) {
-        if (textoComando.startsWith(PREFIX)) {
+        if (prefixoUsado) {
           await sock.sendMessage(from, { text: db.manutencao.mensagem || "🔧 Bot em manutenção, volta já!" });
         }
         return;
@@ -190,8 +198,10 @@ async function iniciarBot() {
 
       if (isGroup) {
         const grupo = pegarGrupo(from);
-        const ehComandoDeAutorizacao = textoComando.startsWith(PREFIX) &&
-          ["autorizargrupo", "desautorizargrupo", "ligarbot", "desligarbot"].includes(textoComando.slice(1).trim().split(/\s+/)[0].toLowerCase());
+        const ehComandoDeAutorizacao = prefixoUsado &&
+          ["autorizargrupo", "desautorizargrupo", "ligarbot", "desligarbot"].includes(
+            textoComando.slice(prefixoUsado.length).trim().split(/\s+/)[0].toLowerCase()
+          );
 
         if (!grupo.autorizado && !ehComandoDeAutorizacao) return;
         if (!db.botLigado && !ehComandoDeAutorizacao) return;
@@ -251,10 +261,10 @@ async function iniciarBot() {
       }
 
       // Comandos (inclui respostas de botões)
-      if (textoComando.startsWith(PREFIX)) {
-        const [comandoBruto, ...args] = textoComando.slice(PREFIX.length).trim().split(/\s+/);
+      if (prefixoUsado) {
+        const [comandoBruto, ...args] = textoComando.slice(prefixoUsado.length).trim().split(/\s+/);
         const comando = comandoBruto.toLowerCase();
-        await tratarComando({ sock, from, msg, comando, args, isGroup, senderJid, nomeUsuario });
+        await tratarComando({ sock, from, msg, comando, args, isGroup, senderJid, nomeUsuario, prefixo: prefixoUsado });
         return;
       }
 
@@ -377,10 +387,10 @@ function detectarMimeType(msg) {
 }
 
 async function tratarComando(ctx) {
-  const { sock, from, comando, senderJid, isGroup } = ctx;
+  const { sock, from, comando, senderJid, isGroup, prefixo = PREFIX } = ctx;
 
   if (!TODOS_COMANDOS[comando]) {
-    await sock.sendMessage(from, { text: `❓ Comando não reconhecido. Digite ${PREFIX}menu para ver os comandos.` });
+    await sock.sendMessage(from, { text: `❓ Comando não reconhecido. Digite ${prefixo}menu para ver os comandos.` });
     return;
   }
 
@@ -416,6 +426,7 @@ const COMANDOS_MINIJOGOS = new Set([
   "dado", "moeda", "ppt", "quiz", "enigma", "anagrama", "resposta", "matematica",
   "termo", "enforcado", "adivinhenumero", "slots", "bicho", "apostar", "roleta",
   "corrida", "futebol", "basquete", "copa", "penalti", "penaltis",
+  "abracar", "abraçar", "bater", "gay", "cafune", "beijar", "elogiar", "susto",
 ]);
 
 iniciarBot();
