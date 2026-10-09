@@ -1,6 +1,6 @@
 # 🩵 Hatsune Miku Bot
 
-Bot de WhatsApp com IA 100% local (sem APIs externas), sistema de pets, batalhas dinâmicas, jogos, RPG e muito mais.
+Bot de WhatsApp com IA local e opção de modelo conversacional, sistema de pets, batalhas dinâmicas, jogos, RPG e muito mais.
 
 ## 📦 Instalação
 
@@ -22,7 +22,16 @@ npm install
 npm start
 ```
 
-Na primeira execução sem `auth_info/`, aparece um QR code no terminal.
+Na primeira execução sem `auth_info/`, aparece um QR code no terminal. Para usar
+código de pareamento, configure `PAIRING_NUMBER` com o número completo,
+incluindo indicativo do país e apenas dígitos (por exemplo, `351912345678`):
+```bash
+PAIRING_NUMBER=351912345678 npm start
+```
+No WhatsApp, abra **Aparelhos conectados → Conectar aparelho → Conectar com
+número de telefone** e introduza o código mostrado no terminal. No Replit,
+guarde o número em Secrets como `PAIRING_NUMBER`. Sem essa variável, continua
+disponível o QR code.
 
 ### Manter dados antigos (opcional)
 
@@ -33,9 +42,21 @@ Se você já tinha o bot rodando e quer manter seus dados:
 
 Não compartilhe `auth_info/`, `.env`, `data/db.json` ou fotos de perfil: podem conter sessão e dados privados.
 
-## 🧠 IA Local (SEM APIs)
+## 🧠 IA conversacional
 
-A IA foi reescrita para funcionar **100% offline**, sem Groq nem UnRouter. Ela usa:
+A IA continua a funcionar localmente sem configuração adicional. Para respostas
+conversacionais mais fortes, pode ativar um fornecedor compatível com a API de
+Chat Completions:
+```bash
+AI_API_KEY=sua-chave AI_MODEL=gpt-4o-mini npm start
+```
+`AI_BASE_URL` permite usar outro endpoint compatível. No Replit, guarde a chave
+em Secrets, nunca no código ou em mensagens. Sem `AI_API_KEY`, nada é enviado a
+esse fornecedor e o bot usa a IA local. Quando ativo, o modelo recebe a pergunta,
+o contexto curto e até 10 mensagens recentes; imagens nunca são enviadas. Se o
+fornecedor falhar, o bot volta à IA local.
+
+A IA local usa:
 - Detecção de intenções (saudações, perguntas, emoções)
 - Busca semântica na base de Q&A (aprendizado-miku.json)
 - Cadeia de Markov (aprendizado.js) como tempero
@@ -43,6 +64,9 @@ A IA foi reescrita para funcionar **100% offline**, sem Groq nem UnRouter. Ela u
 - Detecção de sentimentos
 
 Gatilho: digite **"kok"** ou **"miku"** para falar com ela.
+Também pode usar `!perguntar <pergunta>` sem gatilho e `!limparmemoria` para
+apagar o seu histórico de conversa com a IA nesse chat. `!iainfo` indica se o
+modelo opcional está configurado.
 
 ## 🆕 Novidades da v5.0
 

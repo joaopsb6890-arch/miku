@@ -1,6 +1,6 @@
 /**
  * Bot de WhatsApp — Miku 5.0
- * IA 100% local (sem APIs), sistema de pets, batalhas dinâmicas,
+ * IA local com modelo conversacional opcional, pets, batalhas dinâmicas,
  * botões interativos, perfil personalizável, música otimizada.
  */
 
@@ -45,6 +45,7 @@ const INTERVALO_AVISO_PROTECAO_MS = 30_000;
 
 const NUMEROS_DONO = ["351911756222", "558183983567", "258712321191965", "21359392510098"];
 definirNumeroDonoExibicao(NUMEROS_DONO);
+const NUMERO_PAREAMENTO = process.env.PAIRING_NUMBER || "";
 
 function podeAvisarProtecao(chatId) {
   const agora = Date.now();
@@ -121,6 +122,19 @@ async function iniciarBot() {
       console.log("✅ Bot conectado com sucesso!");
     }
   });
+
+  if (!state.creds.registered && NUMERO_PAREAMENTO.trim()) {
+    try {
+      const { normalizarNumeroTelefone } = require("./lib/pareamento");
+      const numero = normalizarNumeroTelefone(NUMERO_PAREAMENTO);
+      const codigo = await sock.requestPairingCode(numero);
+      console.log("\n📲 Código de pareamento do WhatsApp: " + codigo);
+      console.log("No telemóvel: WhatsApp → Aparelhos conectados → Conectar aparelho → Conectar com número de telefone.\n");
+    } catch (erro) {
+      console.error("Não foi possível gerar o código de pareamento:", erro.message);
+      console.error("Tente novamente ou remova PAIRING_NUMBER para usar o QR code no terminal.");
+    }
+  }
 
   sock.ev.on("group-participants.update", async (evento) => {
     try {
